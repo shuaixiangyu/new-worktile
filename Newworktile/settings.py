@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'x4$ag_t8_61m081!7^y58pi)&$(493wc$otd64_#i)@k90rj(p'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -45,11 +45,17 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+EMAIL_HOST = 'smtp-mail.outlook.com'
+EMAIL_HOST_USER = 'shuaixiangyu123@outlook.com'
+EMAIL_HOST_PASSWORD = 'SXYsxy201302'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_PORT= 587
+EMAIL_USE_TLS = True
 
 ROOT_URLCONF = 'Newworktile.urls'
 
@@ -84,6 +90,7 @@ DATABASES = {
         'PASSWORD': 'SXYsxy201302',
         'HOST': '127.0.0.1',
         'PORT': '3306',
+        'OPTIONS': {'charset': 'utf8mb4'},
     }
 }
 
@@ -123,7 +130,8 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [ os.path.join(BASE_DIR,'static'), ]
-MEDIA_ROOT=os.path.join(BASE_DIR,'static')
+STATICFILES_DIRS = [ os.path.join(BASE_DIR, 'static'), ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'collectstatic')  #存放一些静态文件
+MEDIA_ROOT=os.path.join(BASE_DIR,'media')  #存放用户上传的图片等
+MEDIA_URL = "/media/"   #存放

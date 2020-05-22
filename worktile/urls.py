@@ -1,9 +1,30 @@
+from django.conf.urls import url
 from django.urls import path
+
+from Newworktile import settings
 from worktile import views
+from django.views.static import serve
 
 app_name = 'worktile'
 urlpatterns = [
+    path('testlist/', views.testList, name='testlist'),
+    path('login/',views.login_page,name="login"),
+    path('register/',views.register_page,name="register"),
+    path('findback/',views.findback_page,name="findback"),
+    path('center/',views.center_page,name="center"),
+    path('userinfo/',views.userinfo_page,name="userinfo"),
+    path('changepassword/',views.changepassword_page,name="changepassword"),
+    path('calendar/',views.calendar_page,name="calendar"),
+    path('schedule/<int:schedule_id>/',views.scheduledetail_page,name="scheduledetail"),
+    path('newschedule/',views.newschedule_page,name="newschedule"),
+    path('helper/',views.helper_page,name="helper"),
+    path('schedulehelper/',views.schedulehelper_page,name="schedulehelper"),
+    path('projecthelper/',views.projecthelper_page,name="projecthelper"),
+    path('taskhelper/',views.taskhelper_page,name="taskhelper"),
+    path('friendinfo/<int:friend_id>/',views.friendinfo_page,name="friendinfo"),
     path('work/', views.work, name='workArea'),
+    path('project/<int:project_id>/all-tasks', views.ProjectTasks, name='ProjectTasks'),
+    path('project/<int:project_id>/task/<int:task_id>/all-subtasks', views.TaskSubtasks, name='TaskSubtasks'),
     path('project/<int:project_id>', views.ProjectDetail, name='ProjectDetail'),
     path('project/<int:project_id>/task/<int:task_id>', views.TaskDetail, name='TaskDetail'),
     path('task/<int:task_id>/subtask/<subtask_id>', views.SubtaskDetail, name='SubtaskDetail'),
@@ -26,8 +47,12 @@ urlpatterns = [
     path('task/<int:task_id>/subtask/<int:subtask_id>/members', views.viewSubtaskMembers, name='viewSubtaskMembers'),
     path('all-project', views.projectReport, name='projectReport'),
     path('all-tasks', views.myTasks, name='myTasks'),
-    path('new-friends', views.add_friend, name='add_friend'),
+    path('friends', views.friends, name='friends'),
+    path('new-friends', views.addFrineds, name='add_friend'),
     path('new-friend/email', views.addFriendsEmail, name='addFriendsEmail'),
     path('new-friend/username', views.addFrinedsUsername, name='addFrinedsUsername'),
     path('new-friend/telephone', views.addFrinedsTelephone, name='addFrinedsTelephone'),
+    path('404', views.error, name='error'),
+    path('test', views.test, name='test'),
+    url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT }, name='media'),
 ]
