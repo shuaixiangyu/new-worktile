@@ -7,7 +7,6 @@ from django.views.static import serve
 
 app_name = 'worktile'
 urlpatterns = [
-    path('testlist/', views.testList, name='testlist'),
     path('login/',views.login_page,name="login"),
     path('register/',views.register_page,name="register"),
     path('findback/',views.findback_page,name="findback"),
@@ -52,7 +51,5 @@ urlpatterns = [
     path('new-friend/email', views.addFriendsEmail, name='addFriendsEmail'),
     path('new-friend/username', views.addFrinedsUsername, name='addFrinedsUsername'),
     path('new-friend/telephone', views.addFrinedsTelephone, name='addFrinedsTelephone'),
-    path('404', views.error, name='error'),
-    path('test', views.test, name='test'),
     url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT }, name='media'),
 ]

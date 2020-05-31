@@ -17,31 +17,6 @@ from Newworktile import settings
 from worktile.models import *
 
 
-# 看一个项目有哪些成员的时候：
-# user = User.objects.filter(project=project_id)
-
-def testList(request):
-    l = request.POST.get('list')
-    data = {}
-    data['content'] = l
-    relist=[]
-    list = str(l)
-    list = list[1:-1]
-    list = list.split(',')
-    for i in list:
-        relist.append(int(i))
-    data['finally'] = relist
-    json = {"data": data}
-    return JsonResponse(json, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
-
-
-# 测试
-def test(request):
-    user_id = 1
-    request.session['user_id'] = user_id
-    return HttpResponse('你得到了user_id的session！')
-
-
 # 工作模块主页
 def work(request):
     if request.method == 'GET':
