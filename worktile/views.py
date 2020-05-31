@@ -55,6 +55,7 @@ def work(request):
         project = []
         for a in project_list:
             project.append(model_to_dict(a, fields=['name', 'id']))
+        project.reverse()
         project = {"project": project}
         return JsonResponse(project,safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
     return JsonResponse({})
@@ -69,8 +70,10 @@ def friends(request):
     friends = Friend.objects.filter(user=user_id)
     friends_list=[]
     for a in friends:
-        a = (model_to_dict(a, fields=['username', 'avatar', 'friend']))
-        a['avatar'] = str(a['avatar'])
+        username = User.objects.get(id=a.friend_id).username
+        avatar =  str(User.objects.get(id=a.friend_id).avatar)
+        friend = a.friend_id
+        a = {"username": username, "avatar":avatar, "friend":friend}
         friends_list.append(a)
     friends_list = {"friends_list": friends_list}
     return JsonResponse(friends_list, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
@@ -193,11 +196,22 @@ def changeTaskManager(request, project_id, task_id):
     if user_id is None:
         return redirect('worktile:login')
     if request.method == 'GET':
-        friends = Friend.objects.filter(user=user_id).all()
-        friends_list = []
-        for a in friends:
-            a = (model_to_dict(a, fields=['username', 'avatar', 'friend']))
-            a['avatar'] = str(a['avatar'])
+        # friends = Friend.objects.filter(user=user_id).all()
+        # friends_list = []
+        # for a in friends:
+        #     friend = a.friend_id
+        #     username = User.objects.get(id=friend).username
+        #     avatar = str(User.objects.get(id=friend).avatar)
+        #     a = {"username":username, "avatar":avatar, "friend":friend}
+        #     friends_list.append(a)
+        task = Task.objects.get(id=task_id)
+        user = task.user.all()
+        friends_list=[]
+        for i in user:
+            ID = i.id
+            username = i.username
+            avatar = str(i.avatar)
+            a = {"username":username, "avatar":avatar, "friend":ID}
             friends_list.append(a)
         data = {"friends_list": friends_list}
         return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
@@ -219,11 +233,23 @@ def changeSubtaskManager(request, task_id, subtask_id):
         return redirect('worktile:login')
     user_id = int(user_id)
     if request.method == 'GET':
-        friends = Friend.objects.filter(user=user_id).all()
-        friends_list = []
-        for a in friends:
-            a = (model_to_dict(a, fields=['username', 'avatar', 'friend']))
-            a['avatar'] = str(a['avatar'])
+
+        # friends = Friend.objects.filter(user=user_id).all()
+        # friends_list = []
+        # for a in friends:
+        #     friend = a.friend_id
+        #     username = User.objects.get(id=friend).username
+        #     avatar = str(User.objects.get(id=friend).avatar)
+        #     a = {"username": username, "avatar": avatar, "friend": friend}
+        #     friends_list.append(a)
+        friends_list=[]
+        subtask = sonTask.objects.get(id=subtask_id)
+        user = subtask.user.all()
+        for i in user:
+            ID = i.id
+            username = i.username
+            avatar = str(i.avatar)
+            a = {"username":username, "avatar":avatar, "friend":ID}
             friends_list.append(a)
         data = {"friends_list": friends_list}
         return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
@@ -255,10 +281,10 @@ def changeTaskMembers(request, project_id, task_id):
         for a in friends:
             if a.id == user_id and a.friend_id == user_id:
                 continue
-            b = model_to_dict(a, fields=['username', 'avatar', 'friend'])
-            b['friend_id'] = b['friend']
-            b.pop('friend')
-            b['avatar'] = str(b['avatar'])
+            friend_id = a.friend_id
+            avatar = str(User.objects.get(id=friend_id).avatar)
+            username = User.objects.get(id=friend_id).username
+            b = {"friend_id": friend_id, "avatar": avatar, "username":username}
             if a.friend_id in member_list:
                 b['ifin'] = 1
             else:
@@ -325,10 +351,10 @@ def changeSubtaskMembers(request, task_id, subtask_id):
         for a in friends:
             if a.id == user_id and a.friend_id == user_id:
                 continue
-            b = model_to_dict(a, fields=['username', 'avatar', 'friend'])
-            b['friend_id'] = b['friend']
-            b.pop('friend')
-            b['avatar'] = str(b['avatar'])
+            friend_id = a.friend_id
+            avatar = str(User.objects.get(id=friend_id).avatar)
+            username = User.objects.get(id=friend_id).username
+            b = {"friend_id": friend_id, "avatar": avatar, "username": username}
             if a.friend_id in member_list:
                 b['ifin'] = 1
             else:
@@ -383,10 +409,10 @@ def changeProjectMembers(request, project_id):
         for a in friends:
             if (a.user == user_id and a.friend_id == user_id):
                 continue
-            b = model_to_dict(a, fields=['username', 'avatar', 'friend'])
-            b['friend_id'] = b['friend']
-            b.pop('friend')
-            b['avatar'] = str(b['avatar'])
+            friend_id = a.friend_id
+            avatar = str(User.objects.get(id=friend_id).avatar)
+            username = User.objects.get(id=friend_id).username
+            b = {"friend_id": friend_id, "avatar": avatar, "username": username}
             if a.friend_id in member_list:
                 b['ifin'] = 1
             else:
@@ -840,18 +866,50 @@ def projectReport(request):
     data = {"projects": projects}
     return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
 
-
+def useTime(obj):
+    return obj.time
 # 我的任务页面
 def myTasks(request):
     user_id = request.session.get('user_id')
     user_id = int(user_id)
-    notstart = Task.objects.filter(user=user_id).filter(state=0).all()
-    isgoing = Task.objects.filter(user=user_id).filter(state=1).all()
-    ended = Task.objects.filter(user=user_id).filter(state=2).all()
+    a = Task.objects.filter(user=user_id).filter(state=0).all()
+    b = sonTask.objects.filter(user=user_id).filter(state=0).all()
+    notstart = []
+    for i in a:
+        notstart.append(i)
+    for i in b:
+        notstart.append(i)
+    notstart.sort(key=useTime, reverse=True)
+
+    # # 获取列表的第二个元素
+    # def takeSecond(elem):
+    #     return elem[1]
+    # # 列表
+    # random = [(2, 2), (3, 4), (4, 1), (1, 3)]
+    # # 指定第二个元素排序
+    # random.sort(key=takeSecond)
+
+    a  = Task.objects.filter(user=user_id).filter(state=1).all()
+    b = sonTask.objects.filter(user=user_id).filter(state=1).all()
+    isgoing = []
+    for i in a:
+        isgoing.append(i)
+    for i in b:
+        isgoing.append(i)
+    isgoing.sort(key=useTime, reverse=True)
+    ended=[]
+    a = Task.objects.filter(user=user_id).filter(state=2).all()
+    b = sonTask.objects.filter(user=user_id).filter(state=2).all()
+    for i in a:
+        ended.append(i)
+    for i in b:
+        ended.append(i)
+    ended.sort(key=useTime, reverse=True)
     notstart = serializers.serialize("json", notstart)
     isgoing = serializers.serialize("json", isgoing)
     ended = serializers.serialize("json", ended)
     notstart = json.loads(notstart)
+
     isgoing = json.loads(isgoing)
     ended = json.loads(ended)
     data = {
@@ -968,8 +1026,8 @@ def register_page(request):
                 warning = '已使用本手机注册，请勿中途更改手机号'
                 data = {'warning': warning}
                 return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
-            elif len(telephone) != 11:
-                warning = '手机号不是11位?'
+            elif len(telephone) > 11:
+                warning = '手机号不是只有11位吗？'
                 data = {'warning': warning}
                 return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
             elif email != request.session.get('email'):
@@ -988,7 +1046,6 @@ def register_page(request):
                 warning = '1'
                 data = {'warning': warning}
                 return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
-
         else:
             password1 = request.POST.get('password1')
             password2 = request.POST.get('password2')
@@ -1008,12 +1065,31 @@ def register_page(request):
                     request.session['telephone'] = telephone
                     request.session['email'] = email
                     request.session['check'] = s
+                    word1 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+                    word2 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+                             'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                             'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1',
+                             '2', '3', '4', '5', '6', '7', '8', '9']
+                    address_list = ['qq.com', '163.com', '126.com', 'Outlook.com', 'stu.ouc.edu.cn']
+                    warning = '验证码已发送'
+                    identity = email.split('@')[0]
+                    address = email.split('@')[1]
+                    if address in address_list:
+                        if address == 'qq.com':
+                            for i in identity:
+                                if i not in word1:
+                                    warning = '验证码发送失败，请检查邮箱填写是否正确'
+                        else:
+                            for i in identity:
+                                if i not in word2:
+                                    warning = '验证码发送失败，请检查邮箱填写是否正确'
+                    else:
+                        warning = '验证码发送失败，请检查邮箱填写是否正确'
                     try:
                         send_mail(subject='注册验证码',
                                   message='欢迎注册，您本次注册的验证码为' + s,
                                   from_email=settings.EMAIL_HOST_USER,
                                   recipient_list=[email])
-                        warning = '验证码已发送'
                     except:
                         warning = '验证码发送失败，请检查邮箱填写是否正确'
                     data = {'warning': warning}
@@ -1316,40 +1392,92 @@ def changepassword_page(request):
 
 def calendar_page(request):
     user_id = request.session.get('user_id')
-    if user_id is None:
-        return redirect('worktile:login')
     user = User.objects.get(id=user_id)
     if request.method == "POST":
-        today = request.POST.get('time')
-        today_year = int(today[0:4])
-        today_month = int(today[5:7])
-        today_day = int(today[8:10])
-        time1 = datetime.datetime(today_year, today_month, today_day, 0, 0, 0)
-        time2 = datetime.datetime(today_year, today_month, today_day, 23, 59, 59)
-        schedule_list = user.user_agenda.filter(starttime__gte=time1, endtime__lte=time2)
-        schedule = serializers.serialize('json', schedule_list, ensure_ascii=False)
-        schedule = json.loads(schedule)
-        data = {}
-        data['time'] = {}
-        data['time']['time'] = today
-        data['schedule'] = {}
-        data['schedule'] = schedule
-        return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
+        obtain = request.POST
+        if 'time' in obtain:
+            today = request.POST.get('time')
+            today_year = int(today[0:4])
+            today_month = int(today[5:7])
+            today_day = int(today[8:10])
+            start_year = today_year
+            start_month = today_month
+            end_year = today_year
+            end_month = today_month + 1
+            if today_month == 12:
+                end_year = today_year + 1
+                end_month = 1
+            time1 = datetime.datetime(start_year, start_month, 1, 0, 0, 0)
+            time2 = datetime.datetime(end_year, end_month, 1, 0, 0, 0)
+            daylist = []
+            schedule_list = user.user_agenda.filter(starttime__gte=time1, endtime__lte=time2)
+            for schedule in schedule_list:
+                day = str(schedule.starttime)[0:10]
+                if day not in daylist:
+                    daylist.append(day)
+            daylist.sort()
+            data = {}
+            data['daylist'] = daylist
+            time1 = datetime.datetime(today_year, today_month, today_day, 0, 0, 0)
+            time2 = datetime.datetime(today_year, today_month, today_day, 23, 59, 59)
+            schedule_list = user.user_agenda.filter(starttime__gte=time1, endtime__lte=time2).order_by('-id')
+            schedule = serializers.serialize('json', schedule_list, ensure_ascii=False)
+            schedule = json.loads(schedule)
+            data['schedule'] = schedule
+            return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
+        else:
+            today = request.POST.get('month')
+            today_year = int(today[0:4])
+            today_month = int(today[5:7])
+            start_year = today_year
+            start_month = today_month
+            end_year = today_year
+            end_month = today_month + 1
+            if today_month == 12:
+                end_year = today_year + 1
+                end_month = 1
+            time1 = datetime.datetime(start_year, start_month, 1, 0, 0, 0)
+            time2 = datetime.datetime(end_year, end_month, 1, 0, 0, 0)
+            daylist = []
+            schedule_list = user.user_agenda.filter(starttime__gte=time1, endtime__lte=time2)
+            for schedule in schedule_list:
+                day = str(schedule.starttime)[0:10]
+                if day not in daylist:
+                    daylist.append(day)
+            daylist.sort()
+            data = {}
+            data['daylist'] = daylist
+            data['schedule'] = []
+            return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
     else:
-        data = {}
         today = str(datetime.datetime.now())
         today_year = int(today[0:4])
         today_month = int(today[5:7])
         today_day = int(today[8:10])
+        start_year = today_year
+        start_month = today_month
+        end_year = today_year
+        end_month = today_month + 1
+        if today_month == 12:
+            end_year = today_year + 1
+            end_month = 1
+        time1 = datetime.datetime(start_year, start_month, 1, 0, 0, 0)
+        time2 = datetime.datetime(end_year, end_month, 1, 0, 0, 0)
+        daylist = []
+        schedule_list = user.user_agenda.filter(starttime__gte=time1, endtime__lte=time2)
+        for schedule in schedule_list:
+            day = str(schedule.starttime)[0:10]
+            if day not in daylist:
+                daylist.append(day)
+        daylist.sort()
+        data = {}
+        data['daylist'] = daylist
         time1 = datetime.datetime(today_year, today_month, today_day, 0, 0, 0)
         time2 = datetime.datetime(today_year, today_month, today_day, 23, 59, 59)
-        schedule_list = user.user_agenda.filter(starttime__gte=time1, endtime__lte=time2)
+        schedule_list = user.user_agenda.filter(starttime__gte=time1, endtime__lte=time2).order_by('-id')
         schedule = serializers.serialize('json', schedule_list, ensure_ascii=False)
         schedule = json.loads(schedule)
         data['schedule'] = schedule
-        today = str(today[0:4]) + '-' + str(today[5:7]) + '-' + str(today[8:10])
-        data['time'] = {}
-        data['time']['time'] = today
         return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
 
 def scheduledetail_page(request,schedule_id):
@@ -1433,9 +1561,17 @@ from django.core.paginator import Paginator, EmptyPage
 
 def schedulehelper_page(request):
     user_id = request.session.get('user_id')
-    if user_id is None:
-        return redirect('worktile:login')
     if request.method == "POST":
+        obtain = request.POST
+        if 'delete' in obtain:
+            delete = request.POST.get('delete')
+            if request.session.get('schedule_delete') is None:
+                request.session['schedule_delete'] = str(delete)
+            else:
+                request.session['schedule_delete'] = request.session.get('schedule_delete') + ',' + str(delete)
+            data = {}
+            data['warning'] = '1'
+            return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
         user = User.objects.get(id=user_id)
         page = int(request.POST.get('page'))
         data = {}
@@ -1472,6 +1608,14 @@ def schedulehelper_page(request):
         data['warning'] = warning
         return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
     else:
+        delete = request.session.get('schedule_delete')
+        if delete is not None:
+            delete = delete.split(',')
+            for delete_id in delete:
+                if delete_id != '':
+                    schedule = Agenda.objects.get(id=int(delete_id))
+                    schedule.delete()
+        request.session['schedule_delete'] = None
         user = User.objects.get(id=user_id)
         data = {}
         today = str(datetime.datetime.now())
@@ -1491,108 +1635,179 @@ def schedulehelper_page(request):
 
 def projecthelper_page(request):
     user_id = request.session.get('user_id')
-    if user_id is None:
-        return redirect('worktile:login')
     if request.method =="POST":
         obtain = request.POST
         if 'read' in obtain:
-            user = User.objects.get(id=user_id)
-            project_list = user.project_set.filter()
-            for i in project_list:
-                id = i.id
-                message = ProjectMessage.objects.get(userId=user_id, projectId=id)
-                message.ifread=1
-                message.save()
+            projectmessage_list = ProjectMessage.objects.filter(userId=user_id,ifread=0)
+            for i in projectmessage_list:
+                i.ifread = 1
+                i.save()
             warning = '1'
             data = {'warning': warning}
             return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
+        if 'delete' in obtain:
+            delete = request.POST.get('delete')
+            if request.session.get('project_delete') is None:
+                request.session['project_delete'] = str(delete)
+            else:
+                request.session['project_delete'] = request.session.get('project_delete') + ',' + str(delete)
+            data = {}
+            data['warning'] = '1'
+            return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
         choice = request.POST.get('choice')
         if choice == '0':
+            page = int(request.POST.get('page'))
             data = {}
-            user = User.objects.get(id=user_id)
-            ProjectIdList = ProjectMessage.objects.filter(userId=user_id, ifread=0)
+            projectmessage_list = ProjectMessage.objects.filter(userId=user_id, ifread=0).order_by('-id')
+            paginator = Paginator(projectmessage_list, per_page=4)
+            try:
+                warning = '1'
+                projectmessage_list = paginator.page(page)
+            except EmptyPage:
+                if page < 1:
+                    warning = "到顶了"
+                    projectmessage_list = paginator.page(1)
+                else:
+                    warning = "到底了"
+                    projectmessage_list = paginator.page(paginator.num_pages)
             project_list = []
-            for exm in ProjectIdList:
-                project_list.append(Project.objects.get(id=exm.projectId))
+            for projectmessage in projectmessage_list:
+                project_list.append(Project.objects.get(id=projectmessage.projectId))
             project = serializers.serialize('json', project_list, ensure_ascii=False)
             project = json.loads(project)
             data['project'] = project
+            data['warning'] = warning
             return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
         else:
+            page = int(request.POST.get('page'))
             data = {}
-            user = User.objects.get(id=user_id)
-            ProjectIdList = ProjectMessage.objects.filter(userId=user_id, ifread=1)
+            projectmessage_list = ProjectMessage.objects.filter(userId=user_id, ifread=1).order_by('-id')
+            paginator = Paginator(projectmessage_list, per_page=4)
+            try:
+                warning = '1'
+                projectmessage_list = paginator.page(page)
+            except EmptyPage:
+                if page < 1:
+                    warning = "到顶了"
+                    projectmessage_list = paginator.page(1)
+                else:
+                    warning = "到底了"
+                    projectmessage_list = paginator.page(paginator.num_pages)
             project_list = []
-            for exm in ProjectIdList:
-                project_list.append(Project.objects.get(id=exm.projectId))
+            for projectmessage in projectmessage_list:
+                project_list.append(Project.objects.get(id=projectmessage.projectId))
             project = serializers.serialize('json', project_list, ensure_ascii=False)
             project = json.loads(project)
             data['project'] = project
+            data['warning'] = warning
             return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
     else:
+        delete = request.session.get('project_delete')
+        if delete is not None:
+            delete = delete.split(',')
+            for delete_id in delete:
+                if delete_id != '':
+                    projectmessage = ProjectMessage.objects.get(userId=user_id,projectId=int(delete_id))
+                    projectmessage.delete()
+        request.session['project_delete'] = None
         data = {}
-        user = User.objects.get(id=user_id)
-        ProjectIdList = ProjectMessage.objects.filter(userId=user_id, ifread=0)
+        projectmessage_list = ProjectMessage.objects.filter(userId=user_id, ifread=0).order_by('-id')
         project_list = []
-        for exm in ProjectIdList:
-            project_list.append(Project.objects.get(id=exm.projectId))
+        for projectmessage in projectmessage_list:
+            project_list.append(Project.objects.get(id=projectmessage.projectId))
         project = serializers.serialize('json', project_list, ensure_ascii=False)
         project = json.loads(project)
         data['project'] = project
+        data['warning'] = '1'
         return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
 
 def taskhelper_page(request):
     user_id = request.session.get('user_id')
-    if user_id is None:
-        return redirect('worktile:login')
-    if request.method =="POST":
+    if request.method == "POST":
         obtain = request.POST
         if 'read' in obtain:
-            user = User.objects.get(id=user_id)
-            task_list = user.task_set.filter()
-            for i in task_list:
-                id = i.id
-                message = TaskMessage.objects.get(taskId=id, userId=user_id)
-                message.ifread = 1
-                message.save()
+            taskmessage_list = TaskMessage.objects.filter(userId=user_id, ifread=0)
+            for i in taskmessage_list:
+                i.ifread = 1
+                i.save()
             warning = '1'
             data = {'warning': warning}
             return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
+        if 'delete' in obtain:
+            delete = request.POST.get('delete')
+            if request.session.get('task_delete') is None:
+                request.session['task_delete'] = str(delete)
+            else:
+                request.session['task_delete'] = request.session.get('task_delete') + ',' + str(delete)
+            data = {}
+            data['warning'] = '1'
+            return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
         choice = request.POST.get('choice')
         if choice == '0':
+            page = int(request.POST.get('page'))
             data = {}
-            user = User.objects.get(id=user_id)
-            TaskIdList = TaskMessage.objects.filter(userId=user_id, ifread=0)
+            taskmessage_list = TaskMessage.objects.filter(userId=user_id, ifread=0).order_by('-id')
+            paginator = Paginator(taskmessage_list, per_page=4)
+            try:
+                warning = '1'
+                taskmessage_list = paginator.page(page)
+            except EmptyPage:
+                if page < 1:
+                    warning = "到顶了"
+                    taskmessage_list = paginator.page(1)
+                else:
+                    warning = "到底了"
+                    taskmessage_list = paginator.page(paginator.num_pages)
             task_list = []
-            for exm in TaskIdList:
-                task_list.append(Task.objects.get(id=exm.taskId))
+            for taskmessage in taskmessage_list:
+                task_list.append(Task.objects.get(id=taskmessage.taskId))
             task = serializers.serialize('json', task_list, ensure_ascii=False)
             task = json.loads(task)
             data['task'] = task
+            data['warning'] = warning
             return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
         else:
+            page = int(request.POST.get('page'))
             data = {}
-            user = User.objects.get(id=user_id)
-            TaskIdList = TaskMessage.objects.filter(userId=user_id, ifread=1)
+            taskmessage_list = TaskMessage.objects.filter(userId=user_id, ifread=1).order_by('-id')
+            paginator = Paginator(taskmessage_list, per_page=4)
+            try:
+                warning = '1'
+                taskmessage_list = paginator.page(page)
+            except EmptyPage:
+                if page < 1:
+                    warning = "到顶了"
+                    taskmessage_list = paginator.page(1)
+                else:
+                    warning = "到底了"
+                    taskmessage_list = paginator.page(paginator.num_pages)
             task_list = []
-            for exm in TaskIdList:
-                task_list.append(Task.objects.get(id=exm.taskId))
+            for taskmessage in taskmessage_list:
+                task_list.append(Task.objects.get(id=taskmessage.taskId))
             task = serializers.serialize('json', task_list, ensure_ascii=False)
             task = json.loads(task)
             data['task'] = task
+            data['warning'] = warning
             return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
     else:
+        delete = request.session.get('task_delete')
+        if delete is not None:
+            delete = delete.split(',')
+            for delete_id in delete:
+                if delete_id != '':
+                    taskmessage = TaskMessage.objects.get(userId=user_id, taskId=int(delete_id))
+                    taskmessage.delete()
+        request.session['task_delete'] = None
         data = {}
-        user = User.objects.get(id=user_id)
-        TaskIdList = TaskMessage.objects.filter(userId=user_id, ifread=0)
+        taskmessage_list = TaskMessage.objects.filter(userId=user_id, ifread=0).order_by('-id')
         task_list = []
-        for exm in TaskIdList:
-            task_list.append(Task.objects.get(id=exm.taskId))
+        for taskmessage in taskmessage_list:
+            task_list.append(Task.objects.get(id=taskmessage.taskId))
         task = serializers.serialize('json', task_list, ensure_ascii=False)
         task = json.loads(task)
         data['task'] = task
+        data['warning'] = '1'
         return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
-
 def helper_page(request):
     user_id = request.session.get('user_id')
     user = User.objects.get(id=user_id)
@@ -1610,30 +1825,41 @@ def helper_page(request):
         return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
     else:
         data = {}
+        data['state'] = {}
+        data['state']['schedulestate'] = {}
+        data['state']['projectstate'] = {}
+        data['state']['taskstate'] = {}
         today = str(datetime.datetime.now())
         today_year = int(today[0:4])
         today_month = int(today[5:7])
         today_day = int(today[8:10])
         time1 = datetime.datetime(today_year, today_month, today_day, 0, 0, 0)
         time2 = datetime.datetime(today_year, today_month, today_day, 23, 59, 59)
-        if user.user_agenda.filter(starttime__gte=time1, endtime__lte=time2, state=0):
-            data['schedulestate'] = 1
+        schedule = user.user_agenda.filter(starttime__gte=time1, endtime__lte=time2, state=0).order_by('-id')
+        if schedule:
+            data['state']['schedulestate']['state'] = 1
+            data['state']['schedulestate']['description'] = schedule[0].description
         else:
-            data['schedulestate'] = 0
-        if user.project_set.filter(ifread=0):
-            data['projectstate'] = 1
+            data['state']['schedulestate']['state'] = 0
+            data['state']['schedulestate']['description'] = "无"
+        project = ProjectMessage.objects.filter(userId=user_id,ifread=0).order_by('-id')
+        if project:
+            data['state']['projectstate']['state'] = 1
+            data['state']['projectstate']['description'] = Project.objects.get(id=project[0].projectId).description
         else:
-            data['projectstate'] = 0
-        if user.task_set.filter(ifread=0):
-            data['taskstate'] = 1
+            data['state']['projectstate']['state'] = 0
+            data['state']['projectstate']['description'] = "无"
+        task = TaskMessage.objects.filter(userId=user_id,ifread=0).order_by('-id')
+        if task:
+            data['state']['taskstate']['state'] = 1
+            data['state']['taskstate']['description'] = Task.objects.get(id=task[0].taskId).description
         else:
-            data['taskstate'] = 0
+            data['state']['taskstate']['state'] = 0
+            data['state']['taskstate']['description'] = "无"
         return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False}, charset='utf-8')
 
 def friendinfo_page(request,friend_id):
     user_id = request.session.get('user_id')
-    ccq = Friend.objects.get(id=friend_id)
-    friend_id = ccq.friend_id
     friend = User.objects.get(id=friend_id)
     if request.method == "POST":
         if Friend.objects.filter(user=user_id, friend_id=friend_id):

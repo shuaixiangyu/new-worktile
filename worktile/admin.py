@@ -6,7 +6,7 @@ from worktile.models import *
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_per_page = 10
-    list_display = ['id', 'username', 'telephone', 'email', 'avatar', 'state', 'constellation', 'age', 'profession', 'introduction', 'birthday', 'gender']
+    list_display = ['id', 'username', 'time','telephone', 'email', 'avatar', 'state', 'constellation', 'age', 'profession', 'introduction', 'birthday', 'gender']
     list_filter = (
         ('state', admin.ChoicesFieldListFilter),
     )
@@ -33,7 +33,7 @@ class TaskMessageAdmin(admin.ModelAdmin):
 @admin.register(Agenda)
 class AgendaAdmin(admin.ModelAdmin):
     list_per_page = 10
-    list_display = ['id','description', "user_name",'starttime', 'endtime', 'state']
+    list_display = ['id','description', "user_name",'time','starttime', 'endtime', 'state']
     list_filter = (
         ('state', admin.ChoicesFieldListFilter),
     )
@@ -45,7 +45,7 @@ class AgendaAdmin(admin.ModelAdmin):
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     list_per_page = 10
-    list_display = ['id', 'name', 'creator_name','state', 'description', 'members', 'rate', 'ifread', 'alltask', 'notstart', 'isgoing', 'ended']
+    list_display = ['id', 'name', 'creator_name','time','state', 'description', 'members', 'rate', 'ifread', 'alltask', 'notstart', 'isgoing', 'ended']
 
     def members(self, obj):
         return [a.username for a in obj.user.all()]
@@ -64,7 +64,7 @@ class ProjectAdmin(admin.ModelAdmin):
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
     list_per_page = 10
-    list_display = ['id', 'name', 'state', 'description','members', 'project_name', 'manager_name','ifread','starttime', 'endtime']
+    list_display = ['id', 'name', 'time','state', 'description','members', 'project_name', 'manager_name','ifread','starttime', 'endtime']
     list_filter = (
         ('state', admin.ChoicesFieldListFilter),
         ('ifread'),
@@ -85,7 +85,7 @@ class TaskAdmin(admin.ModelAdmin):
 @admin.register(sonTask)
 class sonTaskAdmin(admin.ModelAdmin):
     list_per_page = 10
-    list_display = ['id', 'name', 'state', 'description', 'members','project_name', 'task_name', 'manager_name','ifread', 'starttime', 'endtime']
+    list_display = ['id', 'name', 'time','state', 'description', 'members','project_name', 'task_name', 'manager_name','ifread', 'starttime', 'endtime']
     list_filter = (
         ('state', admin.ChoicesFieldListFilter),
         ('ifread'),

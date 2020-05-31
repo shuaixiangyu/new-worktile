@@ -22,6 +22,7 @@ class TaskMessage(models.Model):
     ifread = models.IntegerField(u'是否读过', choices=choice, default=0)
 
 class User(models.Model):
+    time = models.DateTimeField(u'创建时间', default=now)
     username = models.CharField(u'用户名',max_length=50)
     password = models.CharField(u'密码', max_length=150, null=False)
     avatar = models.ImageField(u'头像',upload_to='user',default='user/1.jpg')
@@ -60,6 +61,7 @@ class Friend(models.Model):
         verbose_name_plural = '通讯录'
 
 class Agenda(models.Model):
+    time = models.DateTimeField(u'创建时间', default=now)
     user = models.ForeignKey(User, related_name = 'user_agenda', on_delete=models.CASCADE)
     description = models.CharField(u'日程描述', max_length=300)
     starttime = models.DateTimeField(u'起始时间', default = now)
@@ -78,6 +80,7 @@ class Agenda(models.Model):
         verbose_name_plural = '日程'
 
 class Project(models.Model):
+    time = models.DateTimeField(u'创建时间', default=now)
     user = models.ManyToManyField(User, verbose_name='项目成员' )
     creator = models.ForeignKey(User, verbose_name="项目创建者", related_name="project_creator",on_delete=models.CASCADE, null=True)
     name = models.CharField(u'项目名称', max_length=50)
@@ -107,6 +110,7 @@ class Project(models.Model):
         verbose_name_plural = '项目信息'
 
 class Task(models.Model):
+    time = models.DateTimeField(u'创建时间', default=now)
     user = models.ManyToManyField(User, verbose_name='任务成员')
     name = models.CharField(u'任务名称', max_length=50)
     choice1 = (
@@ -134,6 +138,8 @@ class Task(models.Model):
         verbose_name_plural = '任务信息'
 
 class sonTask(models.Model):
+    ifsubtask = models.IntegerField(u'是否是子任务', default=1)
+    time = models.DateTimeField(u'创建时间', default=now)
     user = models.ManyToManyField(User, verbose_name='子任务成员')
     name = models.CharField(u'任务名称', max_length=50)
     choice1 = (
